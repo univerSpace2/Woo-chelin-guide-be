@@ -34,6 +34,11 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
+    team_id_choices = (
+        ('1','CTO'),
+        ('2','연구개발팀'),
+        ('3','전략기술팀')
+    )
 
     email = models.EmailField(verbose_name='이메일',
         max_length=255,
