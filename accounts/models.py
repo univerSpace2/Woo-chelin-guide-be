@@ -5,7 +5,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseU
 class UserManager(BaseUserManager):
     use_in_migrations = True
 
-    def create_user(self, email, organization, password):
+    def create_user(self, email, team_id, password):
 
         if not email:
             raise ValueError('must have user email')
@@ -14,7 +14,7 @@ class UserManager(BaseUserManager):
 
         user = self.model(
             email=self.normalize_email(email),
-            organization=organization
+            team_id=team_id
         )
         user.set_password(password)
         user.save(using=self._db)
@@ -44,7 +44,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=255,
         unique=True,
     )
-    team_id = models.CharField(verbose_name='팀ID',max_length=30)
+    team_id = models.CharField(verbose_name='팀ID',max_length=30, choices=team_id_choices)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
 
