@@ -20,11 +20,12 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, email, password):
+    def create_superuser(self, email, password, team_id):
 
         user = self.create_user(
             email=self.normalize_email(email),
-            password=password
+            password=password,
+            team_id=team_id
         )
         user.is_admin = True
         user.is_superuser = True
@@ -49,8 +50,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_admin = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['organization']
-
+    REQUIRED_FIELDS = ['team_id']
     def __str__(self):
         return self.email
 
