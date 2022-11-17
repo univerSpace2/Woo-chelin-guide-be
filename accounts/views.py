@@ -1,12 +1,15 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.views import APIView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from accounts.models import Profile
-from accounts.serializers import UserSerializer, ProfileSerializer
+from accounts.serializers import UserSerializer, ProfileSerializer, JWTLoginSerializer
 from accounts.utils import create_anonymous_name
 
 User = get_user_model()
@@ -17,6 +20,11 @@ class UserCRUD(ModelViewSet):
     profile_queryset = Profile.objects.all()
     serializer_class = UserSerializer
     profile_serializer_class = ProfileSerializer
+
+    def get_permissions(self):
+        if self.action in ['create']:
+            self.permission_classes = [AllowAny]
+        return super(self.__class__, self).get_permissions()
 
     def get_profile_serializer_class(self):
         """
@@ -45,15 +53,22 @@ class UserCRUD(ModelViewSet):
         kwargs.setdefault('context', self.get_serializer_context())
         return serializer_class(*args, **kwargs)
 
+    def get_profile_object(self, user):
+        obj = self.profile_queryset.filter(user=user)
+        if not obj:
+            return None
+        return obj.first()
+
     def create(self, request, *args, **kwargs):
         anonymous_name = create_anonymous_name()
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        profile_data = request.data.get('profile', {})
+        profile_data = request.data.pop('profile')
         if not profile_data:
             return Response({'profile': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         profile_data['anonymous_name'] = anonymous_name
         profile_serializer = self.perform_create(serializer, profile_data)
+
         res_data = serializer.data
         res_data['profile'] = profile_serializer.data
         headers = self.get_success_headers(res_data)
@@ -62,6 +77,8 @@ class UserCRUD(ModelViewSet):
     def perform_create(self, serializer, profile_data):
         serializer.save()
         instance = serializer.instance
+        instance.set_password(instance.password)
+        instance.save()
         if profile_data:
             profile_data['user'] = instance.id
             profile_serializer = self.get_profile_serializer(data=profile_data)
@@ -81,12 +98,6 @@ class UserCRUD(ModelViewSet):
         res_data['profile'] = profile_serializer.data
         return Response(res_data, status=status.HTTP_200_OK)
 
-    def get_profile_object(self, user):
-        obj = self.profile_queryset.filter(user=user)
-        if not obj:
-            return None
-        return obj.first()
-
     def perform_update(self, serializer, profile_data, partial):
         serializer.save()
         profile_instance = self.get_profile_object(serializer.instance)
@@ -103,38 +114,26 @@ class UserCRUD(ModelViewSet):
 
         return profile_serializer
 
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        for user in queryset:
-            profile = self.get_profile_object(user)
-            user.profile = profile
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance)
-        profile_instance = self.get_profile_object(instance)
-        profile_serializer = self.get_profile_serializer(profile_instance)
-        res_data = serializer.data
-        res_data['profile'] = profile_serializer.data
-        res_data['profile'].pop('id')
-        return Response(res_data)
-
-    def destroy(self, request, *args, **kwargs):
-        print(request.data)
-        return super().destroy(request, *args, **kwargs)
-
-
     @action(detail=True, methods=['get'], url_path='get-rand-name')
     def get_rand_name(self, request, pk=None):
         anonymous_name = create_anonymous_name()
         return Response({'anonymous_name': anonymous_name}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], url_path='change-password')
+    def change_password(self, request, pk=None):
+        input_data = request.data
+        password_one = input_data.get('password_one')
+        password_two = input_data.get('password_two')
+        # using compare password function of django
+        if not password_one or not password_two:
+            return Response({'password': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if password_one != password_two:
+            return Response({'password': 'Password does not match.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        instance = self.get_object()
+        instance.set_password(password_one)
+        instance.save()
+        return Response({'msg': 'password changed successfully'}, status=status.HTTP_200_OK)
 
     # deprecated
     # @action(detail=False, methods=['get'], url_path='work_status')
@@ -147,3 +146,21 @@ class UserCRUD(ModelViewSet):
     #
     # @action(detail=True, methods=['post'], url_path='work_status')
     # def work_status_create(self, request, *args, **kwargs):
+
+class AuthView(APIView):
+    permission_classes = (AllowAny,)
+    serializer_class = JWTLoginSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            user = serializer.validated_data['user']
+            access_token = serializer.validated_data['access']
+            refresh_token = serializer.validated_data['refresh']
+            return Response({
+                'access_token': access_token,
+                'refresh_token': refresh_token,
+                'user': UserSerializer(user).data}
+            , status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

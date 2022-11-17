@@ -1,5 +1,4 @@
-from random import random
-
+import random
 
 def create_anonymous_name():
     rand_first = (
@@ -57,6 +56,7 @@ def create_anonymous_name():
         '사슴',
         '코뿔소',
         '기린',
+        '쿼카',
         '여우',
         '늑대',
         '뱀',
