@@ -7,6 +7,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from accounts.models import Profile
 from accounts.serializers import UserSerializer, ProfileSerializer
+from accounts.utils import create_anonymous_name
 
 User = get_user_model()
 
@@ -45,9 +46,14 @@ class UserCRUD(ModelViewSet):
         return serializer_class(*args, **kwargs)
 
     def create(self, request, *args, **kwargs):
+        anonymous_name = create_anonymous_name()
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        profile_serializer = self.perform_create(serializer, request.data.get('profile', {}))
+        profile_data = request.data.get('profile', {})
+        if not profile_data:
+            return Response({'profile': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        profile_data['anonymous_name'] = anonymous_name
+        profile_serializer = self.perform_create(serializer, profile_data)
         res_data = serializer.data
         res_data['profile'] = profile_serializer.data
         headers = self.get_success_headers(res_data)
@@ -124,6 +130,13 @@ class UserCRUD(ModelViewSet):
         print(request.data)
         return super().destroy(request, *args, **kwargs)
 
+
+    @action(detail=True, methods=['get'], url_path='get-rand-name')
+    def get_rand_name(self, request, pk=None):
+        anonymous_name = create_anonymous_name()
+        return Response({'anonymous_name': anonymous_name}, status=status.HTTP_200_OK)
+
+    # deprecated
     # @action(detail=False, methods=['get'], url_path='work_status')
     # def work_status(self, request, *args, **kwargs):
     #     return Response({'status': 'ok'})
