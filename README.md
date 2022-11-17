@@ -1,2 +1,2 @@
-# work_type_management_system
-출근/재택 관리 시스템
+# 사무실 주변 맛집 정보 공유 및 리뷰 사이트
+
