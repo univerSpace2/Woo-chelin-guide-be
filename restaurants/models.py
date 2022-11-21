@@ -43,6 +43,7 @@ class Restaurant(models.Model):
 
 
 class Review(models.Model):
+
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     content = models.TextField()
