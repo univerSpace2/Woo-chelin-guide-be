@@ -71,34 +71,37 @@ class ExceptionMiddleware(object):
 
         response = self.get_response(request)
 
-        if response.status_code == 500:
-            response = get_response(
-                message="Internal server error, please try again later",
-                status_code=response.status_code
-            )
+        if isinstance(response, Response) and getattr(response, 'accepted_media_type') == 'application/json':
+            if response.status_code == 500:
+                response = get_response(
+                    message="Internal server error, please try again later",
+                    status_code=response.status_code
+                )
 
-        if response.status_code == 404 and "Page not found" in str(response.content):
-            response = get_response(
-                message="Page not found, invalid url",
-                status_code=response.status_code
-            )
+            elif response.status_code == 404 and "Page not found" in str(response.content):
+                response = get_response(
+                    message="Page not found, invalid url",
+                    status_code=response.status_code
+                )
 
-        if response.status_code == 400:
-            response = get_response(
-                message="Bad request, invalid data",
-                status_code=response.status_code
-            )
-        if response.status_code == 401:
-            response = get_response(
-                message="Unauthorized, invalid token",
-                status_code=response.status_code
-            )
+            elif response.status_code == 400:
+                response = get_response(
+                    message="Bad request, invalid data",
+                    status_code=response.status_code
+                )
+            elif response.status_code == 401:
+                response = get_response(
+                    message="Unauthorized, invalid token",
+                    status_code=response.status_code
+                )
+            else:
+                response = get_response(
+                    message='success',
+                    status_code=response.status_code,
+                    result=response.data,
+                    status=True
+                )
+
+            return JsonResponse(data=response, status=response['status_code'])
         else:
-            response = get_response(
-                message='success',
-                status_code=response.status_code,
-                result=response.data,
-                status=True
-            )
-
-        return JsonResponse(data=response, status=response['status_code'])
+            return response

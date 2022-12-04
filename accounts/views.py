@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model, authenticate
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
@@ -10,13 +11,14 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_tracking.mixins import LoggingMixin
 
 from accounts.models import Profile
-from accounts.serializers import UserSerializer, ProfileSerializer, JWTLoginSerializer
+from accounts.serializers import UserSerializer, ProfileSerializer, JWTLoginSerializer, LoginResponseSerializer
 from accounts.utils import create_anonymous_name
+from config.utils import create_response_schema
 
 User = get_user_model()
 
 
-class UserCRUD(LoggingMixin, ModelViewSet,):
+class UserCRUD(LoggingMixin, ModelViewSet, ):
     queryset = User.objects.all()
     profile_queryset = Profile.objects.all()
     serializer_class = UserSerializer
@@ -157,6 +159,13 @@ class AuthView(APIView, LoggingMixin):
     permission_classes = (AllowAny,)
     serializer_class = JWTLoginSerializer
 
+    @swagger_auto_schema(
+        operation_description="Login",
+        request_body=JWTLoginSerializer,
+        # responses={
+        #     200:create_response_schema(result=LoginResponseSerializer)
+        # }
+    )
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):

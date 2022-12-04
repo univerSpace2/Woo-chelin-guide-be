@@ -19,4 +19,4 @@ class RestaurantSerializer(ModelSerializer):
         fields = (
             'id', 'name', 'description', 'rating', 'average_price', 'address_ko', 'address_en', 'longitude', 'latitude',
             'type', 'genre', 'reviews')
-        read_only_fields = ('id')
+        read_only_fields = ('id',)
