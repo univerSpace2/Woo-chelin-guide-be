@@ -1,9 +1,9 @@
 from django.contrib.auth import get_user_model, authenticate
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, permission_classes
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.views import APIView
@@ -23,6 +23,7 @@ class UserCRUD(LoggingMixin, ModelViewSet, ):
     profile_queryset = Profile.objects.all()
     serializer_class = UserSerializer
     profile_serializer_class = ProfileSerializer
+    permission_classes = [IsAuthenticated, AllowAny]
 
     def should_log(self, request, response):
         """Log only errors"""
@@ -121,8 +122,8 @@ class UserCRUD(LoggingMixin, ModelViewSet, ):
 
         return profile_serializer
 
-    @action(detail=True, methods=['get'], url_path='get-rand-name')
-    def get_rand_name(self, request, pk=None):
+    @action(detail=False, methods=['get'], url_path='get-rand-name',permission_classes=[AllowAny,])
+    def get_rand_name(self, request):
         anonymous_name = create_anonymous_name()
         return Response({'anonymous_name': anonymous_name}, status=status.HTTP_200_OK)
 

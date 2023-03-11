@@ -5,7 +5,7 @@ from accounts.views import UserCRUD, AuthView
 
 router = routers.DefaultRouter()
 
-router.register('users', UserCRUD)
+router.register('user', UserCRUD)
 
 urlpatterns = router.urls
 
