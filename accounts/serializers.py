@@ -67,3 +67,9 @@ class JWTLoginSerializer(serializers.ModelSerializer):
             'access': access
         }
         return data
+
+
+class LoginResponseSerializer(serializers.Serializer):
+    access_token = serializers.CharField()
+    refresh_token = serializers.CharField()
+    user = UserSerializer()

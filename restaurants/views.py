@@ -2,11 +2,13 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
+from rest_framework_tracking.mixins import LoggingMixin
+
 from .models import Restaurant, Review
 from restaurants.serializers import RestaurantSerializer, ReviewSerializer
 
 
-class RestaurantCRUD(ModelViewSet):
+class RestaurantCRUD(ModelViewSet, LoggingMixin):
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
 
@@ -32,7 +34,7 @@ class RestaurantCRUD(ModelViewSet):
         return super().destroy(request, *args, **kwargs)
 
 
-class ReviewCRUD(ModelViewSet):
+class ReviewCRUD(ModelViewSet, LoggingMixin):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
 

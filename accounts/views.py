@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model, authenticate
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
@@ -7,19 +8,25 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_tracking.mixins import LoggingMixin
 
 from accounts.models import Profile
-from accounts.serializers import UserSerializer, ProfileSerializer, JWTLoginSerializer
+from accounts.serializers import UserSerializer, ProfileSerializer, JWTLoginSerializer, LoginResponseSerializer
 from accounts.utils import create_anonymous_name
+from config.utils import create_response_schema
 
 User = get_user_model()
 
 
-class UserCRUD(ModelViewSet):
+class UserCRUD(LoggingMixin, ModelViewSet, ):
     queryset = User.objects.all()
     profile_queryset = Profile.objects.all()
     serializer_class = UserSerializer
     profile_serializer_class = ProfileSerializer
+
+    def should_log(self, request, response):
+        """Log only errors"""
+        return response.status_code >= 400
 
     def get_permissions(self):
         if self.action in ['create']:
@@ -147,10 +154,18 @@ class UserCRUD(ModelViewSet):
     # @action(detail=True, methods=['post'], url_path='work_status')
     # def work_status_create(self, request, *args, **kwargs):
 
-class AuthView(APIView):
+
+class AuthView(APIView, LoggingMixin):
     permission_classes = (AllowAny,)
     serializer_class = JWTLoginSerializer
 
+    @swagger_auto_schema(
+        operation_description="Login",
+        request_body=JWTLoginSerializer,
+        # responses={
+        #     200:create_response_schema(result=LoginResponseSerializer)
+        # }
+    )
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
@@ -161,6 +176,6 @@ class AuthView(APIView):
                 'access_token': access_token,
                 'refresh_token': refresh_token,
                 'user': UserSerializer(user).data}
-            , status=status.HTTP_200_OK)
+                , status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
