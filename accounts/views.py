@@ -68,13 +68,11 @@ class UserCRUD(LoggingMixin, ModelViewSet, ):
         return obj.first()
 
     def create(self, request, *args, **kwargs):
-        anonymous_name = create_anonymous_name()
         profile_data = request.data.pop('profile')
         if not profile_data:
             return Response({'profile': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        profile_data['anonymous_name'] = anonymous_name
         profile_serializer = self.perform_create(serializer, profile_data)
 
         res_data = serializer.data
