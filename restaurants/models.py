@@ -6,28 +6,28 @@ User = get_user_model()
 
 class Restaurant(models.Model):
     type_choices = (
-        ('L', 'Lunch'),
-        ('M', 'Mess'),
-        ('C', 'Cafe')
+        ('L', '점심'),
+        ('M', '회식'),
+        ('C', '카페')
     )
     genre_choices = (
-        ('C', 'Chinese'),
-        ('I', 'Indian'),
-        ('K', 'Korean'),
-        ('j', 'Japanese'),
-        ('I', 'Italian'),
-        ('B', 'Bar'),
-        ('W', 'Western'),
-        ('Ch', 'Chicken'),
-        ('P', 'Pizza'),
-        ('Cf', 'Cafe'),
-        ('D', 'Dessert'),
+        ('C', '중식'),
+        ('I', '인도음식'),
+        ('K', '한식'),
+        ('j', '일식'),
+        ('IT', '이탈리아음식'),
+        ('B', '바'),
+        ('W', '양식'),
+        ('Ch', '치킨'),
+        ('P', '피자'),
+        ('Cf', '카페'),
+        ('D', '디저트'),
     )
 
     name = models.CharField(max_length=120)
     description = models.TextField()
     rating = models.DecimalField(max_digits=2, decimal_places=1, default=0)
-    average_price = models.DecimalField(max_digits=6, decimal_places=0)
+    average_price = models.DecimalField(max_digits=6, decimal_places=0, default=0)
     address_ko = models.CharField(max_length=120)
     address_en = models.CharField(max_length=120, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6)
