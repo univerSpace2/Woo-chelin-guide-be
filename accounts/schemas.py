@@ -48,6 +48,17 @@ class UserSchema(ModelSchema):
         model_fields = ["id", "password", "email"]
         orm_mode = True
 
+class TokenSchema(Schema):
+    access_token: str
+    refresh_token:str
+
+class UserTokenSchema(Schema):
+    user: UserSchema
+    token: TokenSchema
+
+class LoginInput(Schema):
+    email:str
+    password:str
 
 class UserOutput(BaseResponseSchema[UserSchema]):
     pass
@@ -70,3 +81,10 @@ def get_user_schemas() -> Dict[str, Any]:
         'UserOutput':UserOutput.schema(),
         'UserListOutput':UserOutput.schema()
     }
+
+
+class UserTokenOutput(BaseResponseSchema[UserTokenSchema]):
+    pass
+
+class TokenOutput(BaseResponseSchema[TokenSchema]):
+    pass

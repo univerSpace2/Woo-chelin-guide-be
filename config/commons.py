@@ -1,9 +1,18 @@
 import random
 from typing import Any, List, Union, TypeVar, Generic
 
+from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator
 from django.db.models import QuerySet
 from ninja import Schema
+
+import jwt
+import datetime
+
+from ninja.errors import HttpError
+from ninja.security import HttpBearer
+
+from config.settings import SECRET_KEY
 
 T = TypeVar('T')
 
@@ -181,3 +190,43 @@ def create_anonymous_name():
     )
 
     return random.choice(rand_first) + ' ' + random.choice(rand_second)
+
+
+def create_token(user):
+    payload_access = {
+        "user_id": user.id,  # Django 사용자 ID
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30),  # 30분 후 만료
+        "token_type": "access",  # 토큰 타입을 명시
+    }
+    payload_refresh = {
+        "user_id": user.id,  # Django 사용자 ID
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7),  # 7일 후 만료
+        "token_type": "refresh",  # 토큰 타입을 명시
+    }
+
+    access_token = jwt.encode(payload_access, SECRET_KEY, algorithm="HS256")
+    refresh_token = jwt.encode(payload_refresh, SECRET_KEY, algorithm="HS256")
+
+    return {"access_token":access_token,"refresh_token":refresh_token}
+
+
+
+def decode_token(token):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms="HS256")
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HttpError(401,"Signature expired. Please log in again.")
+    except jwt.InvalidTokenError:
+        raise HttpError(401, "Invalid token. Please log in again.")
+
+
+
+class TokenAuth(HttpBearer):
+    def authenticate(self, request, token):
+        payload = decode_token(token)
+        if isinstance(payload, str):  # 에러 메시지인 경우
+            return None
+        User = get_user_model()
+        user = User.objects.filter(id=payload["user_id"]).first()
+        return user
