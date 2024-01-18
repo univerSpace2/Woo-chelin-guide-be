@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 
 
+# Create your models here.
 class UserManager(BaseUserManager):
     use_in_migrations = True
 
@@ -50,6 +51,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     def is_staff(self):
         return self.is_admin
 
+    class Meta:
+        db_table = 'app_accounts_user'
+
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -60,3 +64,6 @@ class Profile(models.Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        db_table = 'app_accounts_profile'
