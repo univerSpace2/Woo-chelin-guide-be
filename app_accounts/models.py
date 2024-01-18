@@ -40,12 +40,14 @@ class User(AbstractBaseUser, PermissionsMixin):
                               )
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
+    department = models.ForeignKey('Department', on_delete=models.CASCADE, null=True, related_name='users')
+    slack_member_id = models.CharField(max_length=30, null=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
     def __str__(self):
-        return self.email
+        return f'User {self.email}'
 
     @property
     def is_staff(self):
@@ -58,7 +60,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=30)
-    eng_name = models.CharField(max_length=30)
     phone = models.CharField(max_length=30, blank=True)
     anonymous_name = models.CharField(verbose_name='익명이름', max_length=30)
 
@@ -67,3 +68,14 @@ class Profile(models.Model):
 
     class Meta:
         db_table = 'app_accounts_profile'
+
+class Department(models.Model):
+    department_id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=30)
+    boss = models.ForeignKey(User, on_delete=models.CASCADE, null=True, related_name='departments')
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        db_table = 'app_accounts_department'

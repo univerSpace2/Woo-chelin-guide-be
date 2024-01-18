@@ -15,13 +15,16 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView
+
+from config.authentication import WooTokenObtainPairView, WooTokenRefreshView, WooTokenVerifyView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # path('user/', include('app_accounts.urls')),
+    path('accounts/', include('app_accounts.urls')),
     # path('restaurants/', include('app_restaurants.urls')),
-    path('login/', TokenObtainPairView.as_view()),
-    path('refresh/', TokenObtainPairView.as_view()),
+    path('login/', WooTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/refresh/', WooTokenRefreshView.as_view(), name='token_refresh'),
+    path('token/verify/', WooTokenVerifyView.as_view(), name='token_verify'),
 ]
