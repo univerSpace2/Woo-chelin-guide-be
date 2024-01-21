@@ -6,6 +6,13 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseU
 class UserManager(BaseUserManager):
     use_in_migrations = True
 
+    def create(self,**kwargs):
+        user = self.create_user(email=kwargs.pop('email'), password=kwargs.pop('password'))
+        for key, value in kwargs.items():
+            setattr(user, key, value)
+        user.save(using=self._db)
+        return user
+
     def create_user(self, email, password):
 
         if not email:

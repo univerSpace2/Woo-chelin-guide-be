@@ -65,6 +65,7 @@ class UserViewSetTestCase(APITestCase):
         self.assertFalse(User.objects.filter(id=self.user.id).exists())
 
     def test_anonymous_name(self):
-        response = self.client.get(reverse('user-anonymous-name'))
+        response = self.client.get('/accounts/users/anonymous-name/')
+        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(type(response.data),str)

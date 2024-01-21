@@ -30,12 +30,18 @@ class UserSerializer(serializers.ModelSerializer):
 
     def to_internal_value(self, data):
         internal_data = super().to_internal_value(data)
-        internal_data['department'] = Department.objects.get(department_id=data.get('department_id'))
+        try:
+            internal_data['department'] = Department.objects.get(department_id=data.get('department_id'))
+        except Department.DoesNotExist:
+            pass
         return internal_data
 
     class Meta:
         model = User
         fields = '__all__'
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
 
     @transaction.atomic
     def create(self, validated_data):

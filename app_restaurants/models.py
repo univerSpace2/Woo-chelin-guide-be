@@ -17,6 +17,7 @@ class Restaurant(models.Model):
         ('일식', '일식'),
         ('이탈리아음식', '이탈리아음식'),
         ('바', '바'),
+        ('분식', '분식'),
         ('양식', '양식'),
         ('치킨', '치킨'),
         ('피자', '피자'),
@@ -36,6 +37,8 @@ class Restaurant(models.Model):
     latitude = models.DecimalField(max_digits=10, decimal_places=6)
     type = models.CharField(max_length=2, choices=type_choices)
     genre = models.CharField(max_length=10, choices=genre_choices)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
@@ -45,10 +48,10 @@ class Restaurant(models.Model):
 
 
 class Review(models.Model):
-    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-    content = models.TextField()
-    rating = models.DecimalField(max_digits=2, decimal_places=1)
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING,related_name='user_reviews')
+    content = models.TextField(default="")
+    rating = models.FloatField(default=1.0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     good_cnt = models.IntegerField(default=0)

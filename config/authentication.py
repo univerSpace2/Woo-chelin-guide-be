@@ -25,7 +25,6 @@ class WooTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['id'] = self.user.id
         data['refresh_token'] = str(refresh)
         data['access_token'] = str(refresh.access_token)
-        data['type'] = self.user.type
         data.pop('refresh')
         data.pop('access')
         return data
@@ -42,7 +41,7 @@ class WooTokenObtainPairView(TokenObtainPairView):
         except TokenError as e:
             raise InvalidToken(e.args[0])
         except Exception as e:
-            return Response(data=e.args[0].get("msg"),status=status.HTTP_400_BAD_REQUEST)
+            return Response(data=e.args[0],status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
